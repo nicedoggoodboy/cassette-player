@@ -84,17 +84,25 @@
       align-items: center;
       margin: 36px 0 20px;
       position: relative;
+      width: 100%;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
     }
-    .cassette-img {
+    .cassette-img, .cassette-vid {
       width: 99vw;
       max-width: 480px;
       border-radius: 18px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.16);
-      position: relative;
-      z-index: 0;
       background: #eee;
-      margin: 0 auto;
       display: block;
+      position: absolute;
+      top: 0; left: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .cassette-vid {
+      z-index: 2;
     }
     .track-list {
       position: absolute;
@@ -107,7 +115,7 @@
       font-weight: bold;
       font-size: 1.1rem;
       text-shadow: 2px 2px 8px #111, 0 1px 0 #222;
-      z-index: 2;
+      z-index: 3;
       line-height: 1.6;
       letter-spacing: 1.5px;
       display: flex;
@@ -159,7 +167,6 @@
       background: #222;
       color: #ffe800;
     }
-    /* サイドコントロール（A面B面両面ループ）一列に収める */
     .player-controls.touch {
       flex-wrap: nowrap;
       justify-content: center;
@@ -176,7 +183,7 @@
     }
     @media (max-width: 520px) {
       h1 { font-size: 1.17rem; }
-      .cassette-img { max-width: 98vw; }
+      .cassette-img, .cassette-vid { max-width: 98vw; }
       .track-list { width: 96%; font-size: 0.92rem; }
       .ctrl-btn { font-size: 1.35rem; padding: 5px 9px; }
       .player-controls { gap: 6px; }
@@ -226,8 +233,9 @@
     <span id="shareMsg" style="margin-left: 8px; color:#12b560; font-weight:bold; display:none;">コピーしました！</span>
   </div>
 
-  <div class="cassette-container" style="position:relative;">
+  <div class="cassette-container" style="position:relative;min-height:130px;">
     <img class="cassette-img" id="cassetteImg" src="cassette-bg.png" alt="cassette">
+    <video class="cassette-vid" id="cassetteVideo" src="cassette-anim.mp4" style="display:none;" autoplay loop muted playsinline></video>
     <div class="track-list" id="trackList"></div>
   </div>
 
@@ -293,11 +301,25 @@
     const playAll = document.getElementById("playAll");
     const loopBtn = document.getElementById("loopBtn");
 
-    // タブ状態を維持
+    // アニメーション切り替え
+    function setCassetteAnimation(isPlaying) {
+      const img = document.getElementById("cassetteImg");
+      const vid = document.getElementById("cassetteVideo");
+      if (isPlaying) {
+        img.style.display = "none";
+        vid.style.display = "block";
+        vid.currentTime = 0;
+        vid.play();
+      } else {
+        vid.pause();
+        vid.style.display = "none";
+        img.style.display = "block";
+      }
+    }
+
     function setTabUI() {
       tabA.classList.toggle("active", currentSide === "A" && !playingAll);
       tabB.classList.toggle("active", currentSide === "B" && !playingAll);
-      // playAllはどちらにもactiveつけない
     }
 
     tabA.onclick = () => {
@@ -388,7 +410,10 @@
       return match ? match[1] : null;
     }
     function onYTState(e) {
+      if (e.data === YT.PlayerState.PLAYING) setCassetteAnimation(true);
+      if (e.data === YT.PlayerState.PAUSED) setCassetteAnimation(false);
       if (e.data === YT.PlayerState.ENDED) {
+        setCassetteAnimation(false);
         if (playingAll) {
           let totalList = [...tracksA, ...tracksB];
           let idx = (currentSide === "B" ? currentIdx + tracksA.length : currentIdx);
@@ -401,7 +426,6 @@
               currentSide = "B";
               currentIdx = idx - tracksA.length;
             }
-            // playAll時はactiveタブはそのまま
             playCurrent();
           } else if (isLoop) {
             currentSide = "A";
@@ -422,6 +446,7 @@
     }
 
     function playCurrent() {
+      setCassetteAnimation(true);
       let list = [];
       if (playingAll) {
         list = [...tracksA, ...tracksB];
@@ -436,7 +461,10 @@
       renderList();
     }
     playBtn.onclick = playCurrent;
-    pauseBtn.onclick = ()=>{ if (player) player.pauseVideo(); };
+    pauseBtn.onclick = ()=>{
+      if (player) player.pauseVideo();
+      setCassetteAnimation(false);
+    };
 
     prevBtn.onclick = ()=>{ 
       if (playingAll) {
@@ -451,7 +479,6 @@
             currentSide = "B";
             currentIdx = idx - tracksA.length;
           }
-          // タブactiveはそのまま
           playCurrent();
         }
       } else {
@@ -472,7 +499,6 @@
             currentSide = "B";
             currentIdx = idx - tracksA.length;
           }
-          // タブactiveはそのまま
           playCurrent();
         }
       } else {
