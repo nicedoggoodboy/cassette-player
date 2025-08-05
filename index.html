@@ -40,7 +40,6 @@
       background: #222;
       color: #ffe800;
     }
-
     .input-row {
       display: flex;
       justify-content: center;
@@ -79,7 +78,6 @@
     .add-btn:hover, .share-btn:hover {
       background: #444;
     }
-
     .cassette-container {
       display: flex;
       flex-direction: column;
@@ -161,13 +159,45 @@
       background: #222;
       color: #ffe800;
     }
+    /* サイドコントロール（A面B面両面ループ）一列に収める */
+    .player-controls.touch {
+      flex-wrap: nowrap;
+      justify-content: center;
+      gap: 4px;
+      margin-bottom: 0;
+    }
+    .ctrl-btn.tiny {
+      font-size: 1.1rem;
+      padding: 5px 7px;
+      min-width: 52px;
+      width: 22vw;
+      max-width: 90px;
+      box-sizing: border-box;
+    }
     @media (max-width: 520px) {
       h1 { font-size: 1.17rem; }
       .cassette-img { max-width: 98vw; }
       .track-list { width: 96%; font-size: 0.92rem; }
-      .ctrl-btn { font-size: 1.45rem; padding: 5px 9px; }
+      .ctrl-btn { font-size: 1.35rem; padding: 5px 9px; }
       .player-controls { gap: 6px; }
       .add-btn, .share-btn, .input-row input { font-size: 1.01rem; width: 97vw; max-width: 97vw;}
+      .player-controls.touch { gap: 2vw; }
+      .ctrl-btn.tiny {
+        font-size: 1.00rem;
+        padding: 5px 1vw;
+        min-width: 23vw;
+        max-width: 70px;
+      }
+    }
+    @media (max-width: 420px) {
+      .track-list { font-size: 0.86rem;}
+    }
+    @media (max-width: 360px) {
+      .player-controls.touch .ctrl-btn.tiny {
+        font-size: 0.93rem;
+        min-width: 21vw;
+        max-width: 64px;
+      }
     }
     @media (max-width: 520px) {
       .input-row {
@@ -177,19 +207,6 @@
       }
       .input-row input { margin-bottom: 7px; }
       .add-btn, .share-btn { margin-top: 0; margin-bottom: 7px;}
-    }
-    @media (max-width: 520px) {
-      .player-controls.touch {
-        flex-wrap: wrap;
-        gap: 6px;
-      }
-      .ctrl-btn.tiny {
-        font-size: 1.1rem;
-        padding: 5px 7px;
-        min-width: 55px;
-        width: 27vw;
-        max-width: 100px;
-      }
     }
   </style>
 </head>
@@ -223,7 +240,7 @@
     <button class="ctrl-btn" id="nextBtn" title="進む">⏭️</button>
   </div>
 
-  <div class="player-controls touch">
+  <div class="player-controls touch" id="sideControls">
     <button class="ctrl-btn tiny" id="playA">A面</button>
     <button class="ctrl-btn tiny" id="playB">B面</button>
     <button class="ctrl-btn tiny" id="playAll">両面</button>
@@ -276,18 +293,23 @@
     const playAll = document.getElementById("playAll");
     const loopBtn = document.getElementById("loopBtn");
 
+    // タブ状態を維持
+    function setTabUI() {
+      tabA.classList.toggle("active", currentSide === "A" && !playingAll);
+      tabB.classList.toggle("active", currentSide === "B" && !playingAll);
+      // playAllはどちらにもactiveつけない
+    }
+
     tabA.onclick = () => {
       currentSide = "A";
-      tabA.classList.add("active");
-      tabB.classList.remove("active");
       playingAll = false;
+      setTabUI();
       renderList();
     };
     tabB.onclick = () => {
       currentSide = "B";
-      tabB.classList.add("active");
-      tabA.classList.remove("active");
       playingAll = false;
+      setTabUI();
       renderList();
     };
 
@@ -334,6 +356,7 @@
         </span>`;
       });
       trackList.innerHTML = html || '<span style="opacity:.6;">（曲を追加してください）</span>';
+      setTabUI();
     }
 
     shareBtn.onclick = () => {
@@ -365,29 +388,24 @@
       return match ? match[1] : null;
     }
     function onYTState(e) {
-      // 曲終了時
       if (e.data === YT.PlayerState.ENDED) {
         if (playingAll) {
           let totalList = [...tracksA, ...tracksB];
           let idx = (currentSide === "B" ? currentIdx + tracksA.length : currentIdx);
           if (idx < totalList.length - 1) {
-            // 次の曲へ
             idx++;
             if (idx < tracksA.length) {
               currentSide = "A";
               currentIdx = idx;
-              tabA.classList.add("active"); tabB.classList.remove("active");
             } else {
               currentSide = "B";
               currentIdx = idx - tracksA.length;
-              tabA.classList.remove("active"); tabB.classList.add("active");
             }
+            // playAll時はactiveタブはそのまま
             playCurrent();
           } else if (isLoop) {
-            // 両面ループ時もA面の1曲目から再生
             currentSide = "A";
             currentIdx = 0;
-            tabA.classList.add("active"); tabB.classList.remove("active");
             playCurrent();
           }
         } else {
@@ -419,6 +437,7 @@
     }
     playBtn.onclick = playCurrent;
     pauseBtn.onclick = ()=>{ if (player) player.pauseVideo(); };
+
     prevBtn.onclick = ()=>{ 
       if (playingAll) {
         let totalList = [...tracksA, ...tracksB];
@@ -428,16 +447,16 @@
           if (idx < tracksA.length) {
             currentSide = "A";
             currentIdx = idx;
-            tabA.classList.add("active"); tabB.classList.remove("active");
           } else {
             currentSide = "B";
             currentIdx = idx - tracksA.length;
-            tabA.classList.remove("active"); tabB.classList.add("active");
           }
+          // タブactiveはそのまま
           playCurrent();
         }
       } else {
-        currentIdx=Math.max(0, currentIdx-1); playCurrent();
+        currentIdx=Math.max(0, currentIdx-1);
+        playCurrent();
       }
     };
     nextBtn.onclick = ()=>{ 
@@ -449,30 +468,31 @@
           if (idx < tracksA.length) {
             currentSide = "A";
             currentIdx = idx;
-            tabA.classList.add("active"); tabB.classList.remove("active");
           } else {
             currentSide = "B";
             currentIdx = idx - tracksA.length;
-            tabA.classList.remove("active"); tabB.classList.add("active");
           }
+          // タブactiveはそのまま
           playCurrent();
         }
       } else {
         const list = currentSide === "A" ? tracksA : tracksB;
-        if (currentIdx < list.length-1) { currentIdx++; playCurrent(); }
+        if (currentIdx < list.length-1) {
+          currentIdx++;
+          playCurrent();
+        }
       }
     };
     rewindBtn.onclick = ()=>{ if (player) player.seekTo(Math.max(player.getCurrentTime()-10,0)); };
     ffBtn.onclick = ()=>{ if (player) player.seekTo(player.getCurrentTime()+10); };
 
-    playA.onclick = ()=>{ currentSide="A"; tabA.classList.add("active"); tabB.classList.remove("active"); currentIdx=0; playingAll=false; playCurrent();};
-    playB.onclick = ()=>{ currentSide="B"; tabB.classList.add("active"); tabA.classList.remove("active"); currentIdx=0; playingAll=false; playCurrent();};
+    playA.onclick = ()=>{ currentSide="A"; playingAll=false; currentIdx=0; setTabUI(); playCurrent();};
+    playB.onclick = ()=>{ currentSide="B"; playingAll=false; currentIdx=0; setTabUI(); playCurrent();};
     playAll.onclick = ()=>{
       playingAll=true;
       currentSide="A";
-      tabA.classList.add("active");
-      tabB.classList.remove("active");
       currentIdx=0;
+      setTabUI();
       playCurrent();
     };
     loopBtn.onclick = ()=>{
