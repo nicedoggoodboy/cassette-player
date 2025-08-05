@@ -43,8 +43,10 @@
     .input-row {
       display: flex;
       justify-content: center;
+      align-items: center;
       gap: 8px;
       margin: 1.4rem 0 0.2rem;
+      flex-wrap: nowrap;
     }
     .input-row input {
       font-family: 'Lucida Console', monospace;
@@ -66,7 +68,7 @@
       cursor: pointer;
       font-size: 1.1rem;
       transition: background .2s;
-      margin-left: 8px;
+      margin-left: 3px;
     }
     .add-btn:hover, .share-btn:hover {
       background: #444;
@@ -106,40 +108,9 @@
       flex-direction: column;
       gap: 3px;
     }
-    .track-item {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      pointer-events: auto;
-      position: relative;
-    }
     .track-list .playing {
       color: #ffe800;
       text-shadow: 2px 2px 8px #444, 0 1px 0 #000;
-    }
-    .del-btn {
-      margin-left: 6px;
-      background: #fff3;
-      color: #fff;
-      font-size: 1.15rem;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-      transition: background .15s, color .15s;
-      pointer-events: auto;
-      position: relative;
-      top: 1px;
-    }
-    .del-btn:hover {
-      background: #ffe800;
-      color: #222;
     }
     .player-controls {
       display: flex;
@@ -163,6 +134,8 @@
       background: #222;
       color: #ffe800;
     }
+
+    /* ここからスマホ用レイアウト追加修正！ */
     @media (max-width: 730px) {
       .cassette-img {
         width: 98vw;
@@ -176,6 +149,37 @@
       }
       .player-controls {
         gap: 10px;
+      }
+      /* 入力欄・ボタン並び変更 */
+      .input-row {
+        flex-direction: row;
+        flex-wrap: wrap;
+        width: 97vw;
+        margin-left: auto;
+        margin-right: auto;
+        justify-content: flex-start;
+        align-items: flex-start;
+        gap: 6px;
+      }
+      .input-row input {
+        width: 45vw;  /* 2つ横並びで */
+        min-width: 90px;
+        font-size: 0.93rem;
+        margin-bottom: 0;
+      }
+      .add-btn, .share-btn {
+        width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+        margin-top: 5px;
+        font-size: 1.02rem;
+        display: block;
+      }
+      .input-row > .add-btn,
+      .input-row > .share-btn {
+        width: 100%;
+        margin-left: 0;
+        margin-right: 0;
       }
     }
   </style>
@@ -192,7 +196,7 @@
     <input type="text" id="trackTitle" placeholder="曲タイトル">
     <input type="text" id="trackUrl" placeholder="YouTubeリンク">
     <button class="add-btn" id="addBtn">この面に追加</button>
-    <button class="share-btn" id="shareBtn">🔗シェア</button>
+    <button class="share-btn" id="shareBtn">シェア</button>
   </div>
 
   <div class="cassette-container" style="position:relative;">
@@ -253,31 +257,6 @@
     const playAll = document.getElementById("playAll");
     const loopBtn = document.getElementById("loopBtn");
 
-    // シェアボタン
-    shareBtn.onclick = () => {
-      // プレイリスト→URLパラメータ化
-      const encode = arr => arr.map(t => encodeURIComponent(t.title) + ',' + encodeURIComponent(t.url)).join('|');
-      const param = `?a=${encode(tracksA)}&b=${encode(tracksB)}`;
-      const url = location.origin + location.pathname + param;
-      navigator.clipboard.writeText(url);
-      shareBtn.textContent = "✔️コピーしました!";
-      setTimeout(() => { shareBtn.textContent = "🔗シェア"; }, 1500);
-    };
-
-    // URLからリストを復元
-    function decodeTracks(str) {
-      if (!str) return [];
-      return str.split('|').map(pair => {
-        const [title, url] = pair.split(',');
-        return {title: decodeURIComponent(title||""), url: decodeURIComponent(url||"")};
-      }).filter(t => t.title && t.url);
-    }
-    function loadFromURL() {
-      const p = new URLSearchParams(location.search);
-      tracksA = decodeTracks(p.get('a'));
-      tracksB = decodeTracks(p.get('b'));
-    }
-
     // UIタブ
     tabA.onclick = () => {
       currentSide = "A";
@@ -305,23 +284,15 @@
       renderList();
     };
 
-    // 曲削除
-    function removeTrack(idx) {
-      if (playingAll) {
-        const totalLen = tracksA.length + tracksB.length;
-        if (idx < tracksA.length) {
-          tracksA.splice(idx,1);
-        } else {
-          tracksB.splice(idx-tracksA.length,1);
-        }
-      } else {
-        if (currentSide === "A") tracksA.splice(idx,1);
-        else tracksB.splice(idx,1);
-      }
-      // カレント再生位置調整
-      if (currentIdx >= ((currentSide==="A"?tracksA:tracksB).length)) currentIdx = 0;
-      renderList();
-    }
+    // シェアボタン
+    shareBtn.onclick = () => {
+      let paramA = encodeURIComponent(JSON.stringify(tracksA));
+      let paramB = encodeURIComponent(JSON.stringify(tracksB));
+      let url = `${location.origin}${location.pathname}?A=${paramA}&B=${paramB}`;
+      navigator.clipboard.writeText(url);
+      shareBtn.textContent = "URLコピー済！";
+      setTimeout(() => { shareBtn.textContent = "シェア"; }, 1600);
+    };
 
     // 曲リスト表示（両面はA面→B面全曲を表示）
     function renderList() {
@@ -337,20 +308,10 @@
       }
       let html = "";
       list.forEach((t,i) => {
-        html += `<span class="track-item${i === highlight ? " playing" : ""}">
-                  ${i+1}. ${t.title}
-                  <button class="del-btn" title="削除" onclick="removeTrackBtn(${i})">&times;</button>
-                </span>`;
+        html += `<span class="${i === highlight ? "playing" : ""}">${i+1}. ${t.title}</span>`;
       });
       trackList.innerHTML = html || '<span style="opacity:.6;">（曲を追加してください）</span>';
-      // 再生中の曲番号修正
-      if (highlight >= list.length) currentIdx = 0;
     }
-
-    // 削除ボタン用グローバル関数
-    window.removeTrackBtn = function(i) {
-      removeTrack(i);
-    };
 
     // YouTube埋め込み
     function loadPlayer(url, seek=0, autoplay=1) {
@@ -487,8 +448,22 @@
       loopBtn.classList.toggle("active", isLoop);
     };
 
+    // クエリでプレイリスト読み込み（シェア復元用）
+    function getQueryParam(name) {
+      const params = new URLSearchParams(location.search);
+      return params.get(name) || "";
+    }
+    function loadPlaylistFromQuery() {
+      try {
+        const paramA = getQueryParam("A");
+        const paramB = getQueryParam("B");
+        if (paramA) tracksA = JSON.parse(decodeURIComponent(paramA));
+        if (paramB) tracksB = JSON.parse(decodeURIComponent(paramB));
+      } catch (e) {}
+    }
+    loadPlaylistFromQuery();
+
     // 初期表示
-    loadFromURL();
     renderList();
 
     // YouTube API 読み込み
