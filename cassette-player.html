@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>cassette tape player</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Lucida Console', monospace;
+      background: #fff;
+      margin: 0;
+      padding: 0;
+      color: #222;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2.7rem;
+      letter-spacing: .15em;
+      margin-top: 2rem;
+    }
+    .tab-group {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 1.5rem;
+    }
+    .tab-btn {
+      font-family: 'Lucida Console', monospace;
+      padding: 10px 32px;
+      border: none;
+      border-radius: 12px 12px 0 0;
+      background: #eee;
+      font-size: 1.1rem;
+      cursor: pointer;
+      color: #222;
+      outline: none;
+      transition: background .2s;
+    }
+    .tab-btn.active {
+      background: #222;
+      color: #ffe800;
+    }
+    .input-row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin: 1.4rem 0 0.2rem;
+      align-items: center;
+    }
+    .input-row input {
+      font-family: 'Lucida Console', monospace;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #bbb;
+      width: 220px;
+      font-size: 1.1rem;
+      outline: none;
+    }
+    .add-btn {
+      font-family: 'Lucida Console', monospace;
+      padding: 10px 18px;
+      border: none;
+      background: #222;
+      color: #fff;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: background .2s;
+    }
+    .add-btn:hover {
+      background: #444;
+    }
+    .share-btn {
+      background: #ffe800;
+      color: #222;
+      font-family: 'Lucida Console', monospace;
+      border: none;
+      border-radius: 7px;
+      margin-left: 8px;
+      padding: 10px 14px 10px 12px;
+      font-size: 1.24rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      box-shadow: 0 1px 8px #0001;
+      transition: background 0.18s;
+    }
+    .share-btn:hover {
+      background: #fff68a;
+    }
+    .cassette-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 36px 0 20px;
+      position: relative;
+    }
+    .cassette-img {
+      width: 600px;
+      max-width: 99vw;
+      border-radius: 18px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.16);
+      position: relative;
+      z-index: 0;
+      background: #eee;
+    }
+    .track-list {
+      position: absolute;
+      top: 8.5%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 81%;
+      color: #fff;
+      text-align: center;
+      font-weight: bold;
+      font-size: 1.19rem;
+      text-shadow: 2px 2px 8px #111, 0 1px 0 #222;
+      z-index: 2;
+      pointer-events: none;
+      line-height: 1.6;
+      letter-spacing: 1.5px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .track-list .playing {
+      color: #ffe800;
+      text-shadow: 2px 2px 8px #444, 0 1px 0 #000;
+    }
+    .player-controls {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+    .ctrl-btn {
+      font-size: 2.3rem;
+      background: #f5f5f5;
+      border: 2px solid #ddd;
+      border-radius: 11px;
+      padding: 7px 19px;
+      cursor: pointer;
+      color: #3890e8;
+      margin-bottom: 8px;
+      transition: background 0.18s, color 0.18s;
+    }
+    .ctrl-btn:hover, .ctrl-btn.active {
+      background: #222;
+      color: #ffe800;
+    }
+    @media (max-width: 730px) {
+      .cassette-img {
+        width: 98vw;
+      }
+      .track-list {
+        width: 94%;
+        font-size: 0.98rem;
+      }
+      h1 {
+        font-size: 1.4rem;
+      }
+      .player-controls {
+        gap: 10px;
+      }
+      .share-btn {
+        font-size: 1.05rem;
+        padding: 8px 11px 8px 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>cassette tape player</h1>
+
+  <div class="tab-group">
+    <button class="tab-btn active" id="tabA">A面</button>
+    <button class="tab-btn" id="tabB">B面</button>
+  </div>
+
+  <div class="input-row">
+    <input type="text" id="trackTitle" placeholder="曲タイトル">
+    <input type="text" id="trackUrl" placeholder="YouTubeリンク">
+    <button class="add-btn" id="addBtn">この面に追加</button>
+    <button class="share-btn" id="shareBtn" title="シェア">
+      <svg xmlns="http://www.w3.org/2000/svg" height="1.4em" viewBox="0 0 512 512" style="vertical-align:middle;"><path d="M336 32l112 112-112 112v-80H192V112h144V32zm16 80V96H208v96h144v-80zm112 336c0 26.5-21.5 48-48 48H80c-26.5 0-48-21.5-48-48V272c0-26.5 21.5-48 48-48h112v48H80v176h352V272H304v-48h112c26.5 0 48 21.5 48 48V448z" fill="#222"/></svg>
+      シェア
+    </button>
+  </div>
+
+  <div class="cassette-container" style="position:relative;">
+    <img class="cassette-img" id="cassetteImg" src="cassette-bg.png" alt="cassette">
+    <div class="track-list" id="trackList"></div>
+  </div>
+
+  <div class="player-controls">
+    <button class="ctrl-btn" id="prevBtn" title="戻る">⏮️</button>
+    <button class="ctrl-btn" id="rewindBtn" title="巻き戻し">⏪</button>
+    <button class="ctrl-btn" id="pauseBtn" title="一時停止">⏸️</button>
+    <button class="ctrl-btn" id="playBtn" title="再生">▶️</button>
+    <button class="ctrl-btn" id="ffBtn" title="早送り">⏩</button>
+    <button class="ctrl-btn" id="nextBtn" title="進む">⏭️</button>
+  </div>
+
+  <div class="player-controls" style="margin-bottom:2.4rem;">
+    <button class="ctrl-btn" id="playA">A面</button>
+    <button class="ctrl-btn" id="playB">B面</button>
+    <button class="ctrl-btn" id="playAll">両面</button>
+    <button class="ctrl-btn" id="loopBtn">ループ</button>
+  </div>
+
+  <!-- YouTube iframe埋め込み用（非表示） -->
+  <div id="playerDiv" style="display:none;"></div>
+
+  <script>
+    // 曲データ
+    let tracksA = [];
+    let tracksB = [];
+    let currentSide = "A";
+    let currentIdx = 0;
+    let isLoop = false;
+    let playingAll = false;
+    let player;
+    let YTReady = false;
+
+    // ページ要素
+    const tabA = document.getElementById("tabA");
+    const tabB = document.getElementById("tabB");
+    const trackTitle = document.getElementById("trackTitle");
+    const trackUrl = document.getElementById("trackUrl");
+    const addBtn = document.getElementById("addBtn");
+    const trackList = document.getElementById("trackList");
+    const shareBtn = document.getElementById("shareBtn");
+
+    // コントロールボタン
+    const prevBtn = document.getElementById("prevBtn");
+    const rewindBtn = document.getElementById("rewindBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const playBtn = document.getElementById("playBtn");
+    const ffBtn = document.getElementById("ffBtn");
+    const nextBtn = document.getElementById("nextBtn");
+
+    // ワンタッチ再生
+    const playA = document.getElementById("playA");
+    const playB = document.getElementById("playB");
+    const playAll = document.getElementById("playAll");
+    const loopBtn = document.getElementById("loopBtn");
+
+    // シェアURLボタン
+    shareBtn.onclick = () => {
+      // プレイリストをURLにエンコード
+      const data = {
+        a: tracksA,
+        b: tracksB
+      };
+      const base64 = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+      const shareUrl = location.origin + location.pathname + '?data=' + base64;
+      window.prompt('このURLをシェアしてください', shareUrl);
+    };
+
+    // クエリから曲リスト読み込み
+    function loadFromQuery() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('data')) {
+        try {
+          const data = JSON.parse(decodeURIComponent(escape(atob(params.get('data')))));
+          if (Array.isArray(data.a)) tracksA = data.a;
+          if (Array.isArray(data.b)) tracksB = data.b;
+        } catch(e){}
+      }
+    }
+    loadFromQuery();
+
+    // UIタブ
+    tabA.onclick = () => {
+      currentSide = "A";
+      tabA.classList.add("active");
+      tabB.classList.remove("active");
+      playingAll = false;
+      renderList();
+    };
+    tabB.onclick = () => {
+      currentSide = "B";
+      tabB.classList.add("active");
+      tabA.classList.remove("active");
+      playingAll = false;
+      renderList();
+    };
+
+    addBtn.onclick = () => {
+      const title = trackTitle.value.trim();
+      const url = trackUrl.value.trim();
+      if (!title || !url) return;
+      const list = currentSide === "A" ? tracksA : tracksB;
+      list.push({title, url});
+      trackTitle.value = "";
+      trackUrl.value = "";
+      renderList();
+    };
+
+    // 曲リスト表示（両面はA面→B面全曲を表示）
+    function renderList() {
+      let list = [];
+      let highlight = -1;
+      if (playingAll) {
+        list = [...tracksA, ...tracksB];
+        if (currentSide === "B") highlight = currentIdx + tracksA.length;
+        else highlight = currentIdx;
+      } else {
+        list = (currentSide === "A" ? tracksA : tracksB);
+        highlight = currentIdx;
+      }
+      let html = "";
+      list.forEach((t,i) => {
+        html += `<span class="${i === highlight ? "playing" : ""}">${i+1}. ${t.title}</span>`;
+      });
+      trackList.innerHTML = html || '<span style="opacity:.6;">（曲を追加してください）</span>';
+    }
+
+    // YouTube埋め込み
+    function loadPlayer(url, seek=0, autoplay=1) {
+      let vid = extractVideoId(url);
+      if (!vid) return;
+      if (player) player.destroy();
+      player = new YT.Player('playerDiv', {
+        height: '0', width: '0',
+        videoId: vid,
+        playerVars: { autoplay, start: seek, controls: 0 },
+        events: {
+          'onReady': () => { if (autoplay) player.playVideo(); },
+          'onStateChange': onYTState,
+        }
+      });
+    }
+    function extractVideoId(url) {
+      const match = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+      return match ? match[1] : null;
+    }
+    function onYTState(e) {
+      // 曲終了時
+      if (e.data === YT.PlayerState.ENDED) {
+        if (playingAll) {
+          let totalList = [...tracksA, ...tracksB];
+          let idx = (currentSide === "B" ? currentIdx + tracksA.length : currentIdx);
+          if (idx < totalList.length-1) {
+            idx++;
+            if (idx < tracksA.length) {
+              currentSide = "A";
+              currentIdx = idx;
+              tabA.classList.add("active"); tabB.classList.remove("active");
+            } else {
+              currentSide = "B";
+              currentIdx = idx - tracksA.length;
+              tabA.classList.remove("active"); tabB.classList.add("active");
+            }
+            playCurrent();
+          } else if (isLoop) {
+            currentSide = "A";
+            currentIdx = 0;
+            tabA.classList.add("active"); tabB.classList.remove("active");
+            playCurrent();
+          }
+        } else {
+          const list = currentSide === "A" ? tracksA : tracksB;
+          if (currentIdx < list.length-1) {
+            currentIdx++;
+            playCurrent();
+          } else if (isLoop) {
+            currentIdx = 0;
+            playCurrent();
+          }
+        }
+      }
+    }
+
+    // プレイヤー制御
+    function playCurrent() {
+      let list = [];
+      if (playingAll) {
+        list = [...tracksA, ...tracksB];
+        let idx = (currentSide === "B" ? currentIdx + tracksA.length : currentIdx);
+        if (!list[idx]) return;
+        loadPlayer(list[idx].url, 0, 1);
+      } else {
+        list = (currentSide === "A" ? tracksA : tracksB);
+        if (!list[currentIdx]) return;
+        loadPlayer(list[currentIdx].url, 0, 1);
+      }
+      renderList();
+    }
+    playBtn.onclick = playCurrent;
+    pauseBtn.onclick = ()=>{ if (player) player.pauseVideo(); };
+    prevBtn.onclick = ()=>{ 
+      if (playingAll) {
+        let totalList = [...tracksA, ...tracksB];
+        let idx = (currentSide === "B" ? currentIdx + tracksA.length : currentIdx);
+        if (idx > 0) {
+          idx--;
+          if (idx < tracksA.length) {
+            currentSide = "A";
+            currentIdx = idx;
+            tabA.classList.add("active"); tabB.classList.remove("active");
+          } else {
+            currentSide = "B";
+            currentIdx = idx - tracksA.length;
+            tabA.classList.remove("active"); tabB.classList.add("active");
+          }
+          playCurrent();
+        }
+      } else {
+        currentIdx=Math.max(0, currentIdx-1); playCurrent();
+      }
+    };
+    nextBtn.onclick = ()=>{ 
+      if (playingAll) {
+        let totalList = [...tracksA, ...tracksB];
+        let idx = (currentSide === "B" ? currentIdx + tracksA.length : currentIdx);
+        if (idx < totalList.length-1) {
+          idx++;
+          if (idx < tracksA.length) {
+            currentSide = "A";
+            currentIdx = idx;
+            tabA.classList.add("active"); tabB.classList.remove("active");
+          } else {
+            currentSide = "B";
+            currentIdx = idx - tracksA.length;
+            tabA.classList.remove("active"); tabB.classList.add("active");
+          }
+          playCurrent();
+        }
+      } else {
+        const list = currentSide === "A" ? tracksA : tracksB;
+        if (currentIdx < list.length-1) { currentIdx++; playCurrent(); }
+      }
+    };
+    rewindBtn.onclick = ()=>{ if (player) player.seekTo(Math.max(player.getCurrentTime()-10,0)); };
+    ffBtn.onclick = ()=>{ if (player) player.seekTo(player.getCurrentTime()+10); };
+
+    // ワンタッチ再生
+    playA.onclick = ()=>{ currentSide="A"; tabA.classList.add("active"); tabB.classList.remove("active"); currentIdx=0; playingAll=false; playCurrent();};
+    playB.onclick = ()=>{ currentSide="B"; tabB.classList.add("active"); tabA.classList.remove("active"); currentIdx=0; playingAll=false; playCurrent();};
+    playAll.onclick = ()=>{
+      playingAll=true;
+      currentSide="A";
+      tabA.classList.add("active");
+      tabB.classList.remove("active");
+      currentIdx=0;
+      playCurrent();
+    };
+    loopBtn.onclick = ()=>{
+      isLoop = !isLoop;
+      loopBtn.classList.toggle("active", isLoop);
+    };
+
+    // 初期表示
+    renderList();
+
+    // YouTube API 読み込み
+    function onYouTubeIframeAPIReady(){ YTReady=true; }
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.body.appendChild(tag);
+    window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+  </script>
+</body>
+</html>
