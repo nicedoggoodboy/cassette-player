@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>CassetteTape Player</title>
+  <title>cassette tape player</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
@@ -14,8 +14,8 @@
     }
     h1 {
       text-align: center;
-      font-size: 2.7rem;
-      letter-spacing: .15em;
+      font-size: 2.2rem;
+      letter-spacing: .14em;
       margin-top: 2rem;
     }
     .tab-group {
@@ -40,26 +40,30 @@
       background: #222;
       color: #ffe800;
     }
+
+    /* 入力行デザイン */
     .input-row {
       display: flex;
       justify-content: center;
+      align-items: flex-start;
       gap: 8px;
       margin: 1.4rem 0 0.2rem;
+      flex-wrap: wrap;
     }
     .input-row input {
       font-family: 'Lucida Console', monospace;
       padding: 10px;
       border-radius: 6px;
       border: 1px solid #bbb;
-      width: 220px;
       font-size: 1.1rem;
       outline: none;
-      box-sizing: border-box;
-      transition: width .2s;
+      width: 260px;
+      max-width: 90vw;
+      margin-bottom: 0;
     }
     .add-btn, .share-btn {
       font-family: 'Lucida Console', monospace;
-      padding: 10px 18px;
+      padding: 10px 0;
       border: none;
       background: #222;
       color: #fff;
@@ -67,16 +71,16 @@
       border-radius: 8px;
       cursor: pointer;
       font-size: 1.1rem;
+      width: 260px;
+      max-width: 90vw;
+      margin-top: 7px;
       transition: background .2s;
-      width: 100%;
-      max-width: 420px;
-      margin: 0 auto;
       display: block;
-      margin-bottom: 7px;
     }
     .add-btn:hover, .share-btn:hover {
       background: #444;
     }
+
     .cassette-container {
       display: flex;
       flex-direction: column;
@@ -85,45 +89,65 @@
       position: relative;
     }
     .cassette-img {
-      width: 600px;
-      max-width: 99vw;
+      width: 99vw;
+      max-width: 480px;
       border-radius: 18px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.16);
       position: relative;
       z-index: 0;
       background: #eee;
+      margin: 0 auto;
+      display: block;
     }
     .track-list {
       position: absolute;
-      top: 8.5%;
+      top: 11.5%;
       left: 50%;
       transform: translateX(-50%);
       width: 81%;
       color: #fff;
       text-align: center;
       font-weight: bold;
-      font-size: 1.19rem;
+      font-size: 1.1rem;
       text-shadow: 2px 2px 8px #111, 0 1px 0 #222;
       z-index: 2;
-      pointer-events: none;
       line-height: 1.6;
       letter-spacing: 1.5px;
       display: flex;
       flex-direction: column;
       gap: 3px;
+      pointer-events: none;
+      min-height: 4.2em;
     }
     .track-list .playing {
       color: #ffe800;
       text-shadow: 2px 2px 8px #444, 0 1px 0 #000;
     }
-    .player-controls, .side-controls {
+    .track-list .del-btn {
+      pointer-events: auto;
+      background: rgba(0,0,0,0.28);
+      border: none;
+      color: #fff;
+      font-size: 1rem;
+      margin-left: 0.5em;
+      border-radius: 4px;
+      cursor: pointer;
+      padding: 2px 8px;
+      vertical-align: middle;
+      transition: background 0.15s;
+    }
+    .track-list .del-btn:hover {
+      background: #f35;
+      color: #fff;
+    }
+    .player-controls {
       display: flex;
       justify-content: center;
       gap: 18px;
-      margin-top: 18px;
+      margin-top: 16px;
       flex-wrap: wrap;
     }
-    .ctrl-btn, .side-btn {
+    .ctrl-btn {
       font-size: 2.3rem;
       background: #f5f5f5;
       border: 2px solid #ddd;
@@ -134,65 +158,41 @@
       margin-bottom: 8px;
       transition: background 0.18s, color 0.18s;
     }
-    .ctrl-btn:hover, .ctrl-btn.active,
-    .side-btn:hover, .side-btn.active {
+    .ctrl-btn:hover, .ctrl-btn.active {
       background: #222;
       color: #ffe800;
     }
-    .delete-btn {
-      font-family: inherit;
-      font-size: 1rem;
-      color: #fff;
-      background: #e54;
-      border: none;
-      border-radius: 4px;
-      padding: 2px 8px;
-      margin-left: 10px;
-      cursor: pointer;
-      vertical-align: middle;
-      pointer-events: auto;
+    @media (max-width: 520px) {
+      h1 { font-size: 1.17rem; }
+      .cassette-img { max-width: 98vw; }
+      .track-list { width: 96%; font-size: 0.92rem; }
+      .ctrl-btn { font-size: 1.45rem; padding: 5px 9px; }
+      .player-controls { gap: 6px; }
+      .add-btn, .share-btn, .input-row input { font-size: 1.01rem; width: 97vw; max-width: 97vw;}
     }
-    @media (max-width: 730px) {
-      h1 { font-size: 1.3rem; }
-      .cassette-img { width: 98vw; }
-      .track-list { width: 94%; font-size: 1rem;}
-      .player-controls, .side-controls { gap: 6px; }
-      .ctrl-btn, .side-btn { font-size: 1.3rem; padding: 6px 12px; }
+    /* スマホ入力欄・ボタン縦並び */
+    @media (max-width: 520px) {
       .input-row {
         flex-direction: column;
-        gap: 4px;
-        margin: 1.3rem 0 0.4rem;
-        width: 96vw;
-        max-width: 480px;
-        margin-left: auto;
-        margin-right: auto;
+        align-items: stretch;
+        gap: 0;
       }
-      .input-row input {
-        width: 100%;
-        font-size: 1rem;
-        margin-bottom: 0px;
-      }
-      .add-btn, .share-btn {
-        width: 100%;
-        font-size: 1.1rem;
-        margin-bottom: 7px;
-        max-width: 100vw;
-      }
-      .player-controls, .side-controls {
-        flex-wrap: wrap;
-        justify-content: center;
-        width: 98vw;
-        margin-left: auto;
-        margin-right: auto;
-      }
-      .ctrl-btn, .side-btn {
-        font-size: 1.3rem;
-        min-width: 48px;
-        padding: 7px 8px;
-      }
+      .input-row input { margin-bottom: 7px; }
+      .add-btn, .share-btn { margin-top: 0; margin-bottom: 7px;}
     }
-    @media (max-width: 460px) {
-      .track-list { font-size: 0.88rem;}
+    /* ワンタッチ再生もスマホで一列に */
+    @media (max-width: 520px) {
+      .player-controls.touch {
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .ctrl-btn.tiny {
+        font-size: 1.1rem;
+        padding: 5px 7px;
+        min-width: 55px;
+        width: 27vw;
+        max-width: 100px;
+      }
     }
   </style>
 </head>
@@ -204,19 +204,20 @@
     <button class="tab-btn" id="tabB">B面</button>
   </div>
 
-  <div class="input-row" id="inputRow">
+  <div class="input-row">
     <input type="text" id="trackTitle" placeholder="曲タイトル">
     <input type="text" id="trackUrl" placeholder="YouTubeリンク">
+    <button class="add-btn" id="addBtn">この面に追加</button>
+    <button class="share-btn" id="shareBtn">シェア</button>
+    <span id="shareMsg" style="margin-left: 8px; color:#12b560; font-weight:bold; display:none;">コピーしました！</span>
   </div>
-  <button class="add-btn" id="addBtn">この面に追加</button>
-  <button class="share-btn" id="shareBtn">シェア</button>
 
   <div class="cassette-container" style="position:relative;">
     <img class="cassette-img" id="cassetteImg" src="cassette-bg.png" alt="cassette">
     <div class="track-list" id="trackList"></div>
   </div>
 
-  <div class="player-controls" id="playerControls">
+  <div class="player-controls">
     <button class="ctrl-btn" id="prevBtn" title="戻る">⏮️</button>
     <button class="ctrl-btn" id="rewindBtn" title="巻き戻し">⏪</button>
     <button class="ctrl-btn" id="pauseBtn" title="一時停止">⏸️</button>
@@ -224,11 +225,12 @@
     <button class="ctrl-btn" id="ffBtn" title="早送り">⏩</button>
     <button class="ctrl-btn" id="nextBtn" title="進む">⏭️</button>
   </div>
-  <div class="side-controls" id="sideControls">
-    <button class="side-btn" id="playA">A面</button>
-    <button class="side-btn" id="playB">B面</button>
-    <button class="side-btn" id="playAll">両面</button>
-    <button class="side-btn" id="loopBtn">ループ</button>
+
+  <div class="player-controls touch">
+    <button class="ctrl-btn tiny" id="playA">A面</button>
+    <button class="ctrl-btn tiny" id="playB">B面</button>
+    <button class="ctrl-btn tiny" id="playAll">両面</button>
+    <button class="ctrl-btn tiny" id="loopBtn">ループ</button>
   </div>
 
   <!-- YouTube iframe埋め込み用（非表示） -->
@@ -245,14 +247,29 @@
     let player;
     let YTReady = false;
 
+    // シェアURLのデータ復元
+    function loadFromURL() {
+      const params = new URLSearchParams(location.search);
+      const data = params.get("data");
+      if (data) {
+        try {
+          const obj = JSON.parse(decodeURIComponent(data));
+          if (Array.isArray(obj.tracksA)) tracksA = obj.tracksA;
+          if (Array.isArray(obj.tracksB)) tracksB = obj.tracksB;
+        } catch {}
+      }
+    }
+    loadFromURL();
+
     // ページ要素
     const tabA = document.getElementById("tabA");
     const tabB = document.getElementById("tabB");
     const trackTitle = document.getElementById("trackTitle");
     const trackUrl = document.getElementById("trackUrl");
     const addBtn = document.getElementById("addBtn");
-    const shareBtn = document.getElementById("shareBtn");
     const trackList = document.getElementById("trackList");
+    const shareBtn = document.getElementById("shareBtn");
+    const shareMsg = document.getElementById("shareMsg");
 
     // コントロールボタン
     const prevBtn = document.getElementById("prevBtn");
@@ -268,7 +285,7 @@
     const playAll = document.getElementById("playAll");
     const loopBtn = document.getElementById("loopBtn");
 
-    // タブ切り替え
+    // UIタブ
     tabA.onclick = () => {
       currentSide = "A";
       tabA.classList.add("active");
@@ -295,6 +312,21 @@
       renderList();
     };
 
+    // 曲削除
+    function delTrack(idx) {
+      if (playingAll) {
+        let list = [...tracksA, ...tracksB];
+        if (idx < tracksA.length) tracksA.splice(idx,1);
+        else tracksB.splice(idx-tracksA.length,1);
+      } else {
+        const list = currentSide === "A" ? tracksA : tracksB;
+        list.splice(idx,1);
+      }
+      // currentIdx補正
+      currentIdx = Math.max(0, Math.min(currentIdx, (currentSide==="A"?tracksA:tracksB).length-1));
+      renderList();
+    }
+
     // 曲リスト表示（両面はA面→B面全曲を表示）
     function renderList() {
       let list = [];
@@ -309,23 +341,25 @@
       }
       let html = "";
       list.forEach((t,i) => {
-        html += `<span class="${i === highlight ? "playing" : ""}">${i+1}. ${t.title}<button class="delete-btn" onclick="deleteTrack(${i})">×</button></span>`;
+        html += `<span class="${i === highlight ? "playing" : ""}">
+          ${i+1}. ${t.title}
+          <button class="del-btn" onclick="delTrack(${i});event.stopPropagation();">×</button>
+        </span>`;
       });
       trackList.innerHTML = html || '<span style="opacity:.6;">（曲を追加してください）</span>';
     }
 
-    // 削除機能
-    window.deleteTrack = function(i){
-      let list = playingAll ? (currentSide === "A" ? tracksA : tracksB) : (currentSide === "A" ? tracksA : tracksB);
-      if (playingAll) {
-        // 両面の場合はA面/B面の境界で振り分け
-        if (i < tracksA.length) { tracksA.splice(i,1); }
-        else { tracksB.splice(i-tracksA.length,1); }
-      } else {
-        list.splice(i,1);
-      }
-      renderList();
+    // シェア（前のバージョン：コピーしました！の表示＆クリップボードコピー）
+    shareBtn.onclick = () => {
+      const params = encodeURIComponent(JSON.stringify({ tracksA, tracksB }));
+      const url = `${location.origin}${location.pathname}?data=${params}`;
+      navigator.clipboard.writeText(url);
+      shareMsg.style.display = "inline";
+      setTimeout(() => shareMsg.style.display = "none", 1200);
     };
+
+    // 曲削除関数をグローバル化
+    window.delTrack = delTrack;
 
     // YouTube埋め込み
     function loadPlayer(url, seek=0, autoplay=1) {
@@ -347,6 +381,7 @@
       return match ? match[1] : null;
     }
     function onYTState(e) {
+      // 曲終了時
       if (e.data === YT.PlayerState.ENDED) {
         if (playingAll) {
           let totalList = [...tracksA, ...tracksB];
@@ -460,34 +495,6 @@
       isLoop = !isLoop;
       loopBtn.classList.toggle("active", isLoop);
     };
-
-    // シェア機能
-    shareBtn.onclick = () => {
-      const state = {
-        a: tracksA, b: tracksB
-      };
-      const base = location.origin + location.pathname;
-      const params = new URLSearchParams();
-      params.set('a', btoa(unescape(encodeURIComponent(JSON.stringify(tracksA)))));
-      params.set('b', btoa(unescape(encodeURIComponent(JSON.stringify(tracksB)))));
-      const url = `${base}?${params.toString()}`;
-      if (navigator.share) {
-        navigator.share({ url }).catch(()=>{ navigator.clipboard.writeText(url); });
-      } else {
-        navigator.clipboard.writeText(url);
-        alert("URLをクリップボードにコピーしました");
-      }
-    };
-
-    // クエリから復元
-    function loadFromQuery(){
-      const u = new URL(location.href);
-      let qa = u.searchParams.get('a'), qb = u.searchParams.get('b');
-      if (qa) tracksA = JSON.parse(decodeURIComponent(escape(atob(qa))));
-      if (qb) tracksB = JSON.parse(decodeURIComponent(escape(atob(qb))));
-      renderList();
-    }
-    loadFromQuery();
 
     // 初期表示
     renderList();
